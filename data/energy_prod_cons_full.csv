@@ -1,4 +1,4 @@
-,State,year,billions BTU,type,boolean
+index,state,year,billions_BTU,type,boolean
 0,AK,1960,7189,coal,consumption
 1,AL,1960,395400,coal,consumption
 2,AR,1960,356,coal,consumption
