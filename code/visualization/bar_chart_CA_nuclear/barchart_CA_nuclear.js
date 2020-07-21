@@ -71,10 +71,10 @@ d3.csv("https://raw.githubusercontent.com/nikomc/US_energy_potential/master/data
     svg
       .append('text')
       .attr('text-anchor', 'center')
-      .attr('font-size', 10)
+      .attr('font-size', 12)
       .style('color', 'white')
-      .attr('x', width / 2 - 8)
-      .attr('y', margin.top - 20)
+      .attr('x', width - margin.right)
+      .attr('y', margin.top - 10)
       .text('Billions BTU');
 
     svg.append("g").call(xAxis);
