@@ -20,8 +20,6 @@ var svg = d3.select("#my_dataviz")
     .attr("transform",
           "translate(" + margin.left + "," + margin.top + ")");
 
-var
-
 //Read the data
 d3.csv("https://raw.githubusercontent.com/nikomc/US_energy_potential/master/data/energy_prod_cons_full.csv", d3.autoType).then(function(data) {
 
