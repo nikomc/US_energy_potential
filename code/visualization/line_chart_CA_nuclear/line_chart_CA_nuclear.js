@@ -1,7 +1,16 @@
+// DONE Make simple line Chart
+// DONE Add axes, and format left axis to read as "300k" and so forth
+// DONE Add title
+// DONE Add "units" directly to y-axis
+// DONE Add title to x-axis
+// DONE "Smooth" the line chart
+// Add hover functionality, so that data appears along the line on mousehover
+// Add annotations in specific positions (what happened, federally, in the different years?)
+
 // set the dimensions and margins of the graph
 var margin = {top: 10, right: 100, bottom: 30, left: 30},
-    width = 650 - margin.left - margin.right,
-    height = 800 - margin.top - margin.bottom;
+    width = 900 - margin.left - margin.right,
+    height = 600 - margin.top - margin.bottom;
 
 var parseTime = d3.timeParse("%Y");
 
@@ -28,7 +37,8 @@ d3.csv("../../../data/energy_prod_cons_full.csv").then(function(data) {
 
   var line = d3.line()
       .x(function(d) {return x(d.year); })
-      .y(function(d) {return y(d.billions_BTU); });
+      .y(function(d) {return y(d.billions_BTU); })
+      .curve(d3.curveBasis); // different than v4, which used .interpolate("basis")
 
       // append the svg object to the body of the page
   var svg = d3.select("#my_dataviz")
@@ -40,67 +50,64 @@ d3.csv("../../../data/energy_prod_cons_full.csv").then(function(data) {
     .datum(data)
     .attr('class', 'line')
     .attr('stroke', 'steelblue')
-    .attr('stroke-width', 1.5)
+    .attr('stroke-width', 2.5)
     .attr('fill', 'none')
     .attr('d', line);
 
   var xAxis = g => g
       .attr("transform", "translate(0," + height + ")")
       .call(d3.axisBottom(x).ticks(width / 80))
-      .call(g => g.select(".domain").remove());
+      .call(g => g.append("text")
+        .attr("x", width - margin.right)
+        .attr("y", margin.bottom - 4)
+        .attr("fill", "currentColor")
+        .attr("text-anchor", "end")
+        .text("Increasing Years →"));
+      // .call(g => g.select(".domain").remove());
 
   var yAxis = g => g
     .attr("transform", 'translate(' + (margin.left + 10) + ',0)')
-    .call(d3.axisLeft(y));
+    .call(d3.axisLeft(y).ticks(10).tickFormat(d3.formatPrefix("1.0", 1e5)))
+    .call(g => g.append("text")
+        .attr("x", -margin.left)
+        .attr("y", 20)
+        .attr("fill", "currentColor")
+        .attr("text-anchor", "start")
+        .text("↑ Billions BTU"));
+
+  svg.append("text")
+    .attr("x", (width / 2))
+    .attr("y", (margin.top + 4))
+    .attr("class", "title")
+    .attr("text-anchor", "middle")
+    .text("Nuclear Power Usage in California");
 
   svg.append("g").call(xAxis);
   svg.append("g").call(yAxis);
 
-  //
-  //   svg
-  //     .append("g")
-  //     .attr("fill", "steelblue")
-  //     .selectAll("rect")
-  //     .data(data)
-  //     .join("rect")
-  //     .attr("x", x(0))
-  //     .attr("y", (d, i) => y(i))
-  //     .attr("width", d => x(d.billions_BTU) - x(0))
-  //     .attr("height", y.bandwidth());
-  //
-  //   svg
-  //     .append("g")
-  //     .attr("fill", "white")
-  //     .attr("text-anchor", "end")
-  //     .attr("font-family", "sans-serif")
-  //     .attr("font-size", 10)
-  //     .selectAll("text")
-  //     .data(data)
-  //     .join("text")
-  //     .attr("x", d => x(d.billions_BTU))
-  //     .attr("y", (d, i) => y(i) + y.bandwidth() / 2)
-  //     .attr("dy", "0.35em")
-  //     .attr("dx", -4)
-  //     .text(d => +d.billions_BTU)
-  //     .call(text =>
-  //       text
-  //         .filter(d => x(d.billions_BTU) - x(0) < 45) // short bars
-  //         .attr("dx", +6)
-  //         .attr("fill", "black")
-  //         .attr("text-anchor", "start")
-  //     );
-  //
-  //   svg
-  //     .append('text')
-  //     .attr('text-anchor', 'center')
-  //     .attr('font-size', 12)
-  //     .style('color', 'white')
-  //     .attr('x', width - margin.right)
-  //     .attr('y', margin.top - 10)
-  //     .text('Billions BTU');
-  //
-  //   svg.append("g").call(xAxis);
-  //
-  //   svg.append("g").call(yAxis);
-
 })
+
+
+const tooltip = svg.append("g");
+
+  svg.on("touchmove mousemove", function() {
+    const {date, value} = bisect(d3.mouse(this)[0]);
+
+    tooltip
+        .attr("transform", `translate(${x(date)},${y(value)})`)
+        .call(callout, `${formatValue(value)}
+        ${formatDate(date)}`);
+      });
+
+    svg.on("touchend mouseleave", () => tooltip.call(callout, null));
+
+    bisect = {
+      const bisect = d3.bisector(d => d.year).left;
+      return mx => {
+        const date = x.invert(mx);
+        const index = bisect(data, date, 1);
+        const a = data[index - 1];
+        const b = data[index];
+        return b && (date - a.year > b.year - date) ? b : a;
+      };
+    }
