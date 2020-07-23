@@ -1,3 +1,11 @@
+// Note: I may need a key function; e.g. var key = function(d) {
+//return d.index;
+//}
+
+// and change the data bind to .data(dataset, key)
+
+// Add hover functionality, so that year and other data appears on mouseover...see Bostock tutorials
+
 // set the dimensions and margins of the graph
 var margin = {top: 10, right: 100, bottom: 30, left: 30},
     width = 650 - margin.left - margin.right,
