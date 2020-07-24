@@ -11,6 +11,8 @@
 // Add dropdown, so users can select energy source
 // Upon dropdown selection, update title
 
+// Use d3.nest and see http://bl.ocks.org/jhubley/17aa30fd98eb0cc7072f
+
 // set the dimensions and margins of the graph
 var margin = {top: 10, right: 100, bottom: 30, left: 30},
     width = 900 - margin.left - margin.right,
