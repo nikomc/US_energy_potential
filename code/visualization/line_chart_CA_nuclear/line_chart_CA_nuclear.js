@@ -6,6 +6,10 @@
 // DONE "Smooth" the line chart
 // Add hover functionality, so that data appears along the line on mousehover
 // Add annotations in specific positions (what happened, federally, in the different years?)
+// Add dropdown, so users can select their preferred state.
+// Upon dropdown selection, update title
+// Add dropdown, so users can select energy source
+// Upon dropdown selection, update title
 
 // set the dimensions and margins of the graph
 var margin = {top: 10, right: 100, bottom: 30, left: 30},
@@ -14,15 +18,18 @@ var margin = {top: 10, right: 100, bottom: 30, left: 30},
 
 var parseTime = d3.timeParse("%Y");
 
-//Read the data
-d3.csv("../../../data/energy_prod_cons_full.csv").then(function(data) {
+d3.csv("../../../data/energy_prod_cons_full.csv", d3.autoType).then(function(data) {
+
+  var data = data.filter(function(d) {
+    if (d["state"] == "CA" && d["type"] == "coal" && d["boolean"] == "consumption") {
+      return d;
+    };
+  });
+
   data.forEach(function(d) {
     d.year = parseTime(d.year);
     d.billions_BTU = +d.billions_BTU;
   });
-
-  var data = data.filter(function(d) { return d.state == 'CA' && d.type == 'nuclear' && d.boolean == 'consumption'})
-  console.log(data);
 
   var y = d3.scaleLinear()
     .domain([0, d3.max(data, function(d) {return d.billions_BTU})])
@@ -50,9 +57,27 @@ d3.csv("../../../data/energy_prod_cons_full.csv").then(function(data) {
     .datum(data)
     .attr('class', 'line')
     .attr('stroke', 'steelblue')
-    .attr('stroke-width', 2.5)
+    .attr('stroke-width', 6.5)
     .attr('fill', 'none')
     .attr('d', line);
+    // .on("mouseover", function(d) {
+    //   var coordinates = d3.mouse(this);
+    //   var xPosition = coordinates[0] + margin.left;
+    //   var yPosition = coordinates[1] - margin.top;
+    //
+    //   d3.select("#tooltip")
+    //     .style("left", xPosition + "px")
+    //     .style("top", yPosition + "px")
+    //     .select("#state_name")
+    //       .text(d.state)
+    //     .select("#value_label")
+    //       .text(+d.billions_BTU, d.year);
+    //
+    //   d3.select("#tooltip").classed("hidden", false);
+    // })
+    // .on("mouseout", function() {
+    //   d3.select("#tooltip").classed("hidden", true);
+    // });
 
   var xAxis = g => g
       .attr("transform", "translate(0," + height + ")")
@@ -63,7 +88,6 @@ d3.csv("../../../data/energy_prod_cons_full.csv").then(function(data) {
         .attr("fill", "currentColor")
         .attr("text-anchor", "end")
         .text("Increasing Years →"));
-      // .call(g => g.select(".domain").remove());
 
   var yAxis = g => g
     .attr("transform", 'translate(' + (margin.left + 10) + ',0)')
@@ -75,6 +99,9 @@ d3.csv("../../../data/energy_prod_cons_full.csv").then(function(data) {
         .attr("text-anchor", "start")
         .text("↑ Billions BTU"));
 
+  svg.append("g").call(xAxis);
+  svg.append("g").call(yAxis);
+
   svg.append("text")
     .attr("x", (width / 2))
     .attr("y", (margin.top + 4))
@@ -82,32 +109,4 @@ d3.csv("../../../data/energy_prod_cons_full.csv").then(function(data) {
     .attr("text-anchor", "middle")
     .text("Nuclear Power Usage in California");
 
-  svg.append("g").call(xAxis);
-  svg.append("g").call(yAxis);
-
-})
-
-
-const tooltip = svg.append("g");
-
-  svg.on("touchmove mousemove", function() {
-    const {date, value} = bisect(d3.mouse(this)[0]);
-
-    tooltip
-        .attr("transform", `translate(${x(date)},${y(value)})`)
-        .call(callout, `${formatValue(value)}
-        ${formatDate(date)}`);
-      });
-
-    svg.on("touchend mouseleave", () => tooltip.call(callout, null));
-
-    bisect = {
-      const bisect = d3.bisector(d => d.year).left;
-      return mx => {
-        const date = x.invert(mx);
-        const index = bisect(data, date, 1);
-        const a = data[index - 1];
-        const b = data[index];
-        return b && (date - a.year > b.year - date) ? b : a;
-      };
-    }
+});
