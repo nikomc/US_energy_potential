@@ -1,17 +1,131 @@
 <!DOCTYPE html>
-<html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <title>Line Chart with Dropdown Selection</title>
-  <link rel="stylesheet" type="text/css" href="style.css">
+<meta charset="utf-8">
+<title>Multi Line Chart</title>
+<script type="text/javascript" src="https://d3js.org/d3.v5.min.js"></script>
+<link rel="stylesheet" type="text/css" href="style.css">
+<style></style>
 </head>
 
 <body>
-  <div id="chart"></div>
+<div id="container" class="svg-container"></div>
+<script>
+//------------------------1. PREPARATION------------------------//
+//-----------------------------SVG------------------------------//
+const width = 960;
+const height = 500;
+const margin = 20;
+const padding = 5;
+const adj = 30;
+// we are appending SVG first
+const svg = d3.select("div#container").append("svg")
+    .attr("preserveAspectRatio", "xMinYMin meet")
+    .attr("viewBox", "-"
+          + adj + " -"
+          + adj + " "
+          + (width + adj *3) + " "
+          + (height + adj*3))
+    .style("padding", padding)
+    .style("margin", margin)
+    .classed("svg-content", true);
 
-  <script src="https://d3js.org/d3.v5.js"></script>
-  <script src="multiline_chart_nuclear.js"></script>
-  <!-- Color Scale -->
-<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+//-----------------------------DATA-----------------------------//
+const timeConv = d3.timeParse("%Y");
+const dataset = d3.csv("../../../data/renewables_use_states.csv");
+dataset.then(function(data) {
+    var slices = data.columns.slice(1).map(function(id) {
+        return {
+            id: id,
+            values: data.map(function(d){
+                return {
+                    date: timeConv(d.year),
+                    measurement: +d[id]
+                };
+            })
+        };
+    });
+
+//----------------------------SCALES----------------------------//
+  const x = d3.scaleTime().range([0,width]);
+  const y = d3.scaleLinear().rangeRound([height, 0]);
+
+  x.domain(d3.extent(data, function(d){
+      return timeConv(d.date)})
+    );
+
+  y.domain([(0), d3.max(slices, function(c) {
+      return d3.max(c.values, function(d) {
+          return d.measurement + 4; });
+          })
+      ]);
+
+  //-----------------------------AXES-----------------------------//
+  const yaxis = d3.axisLeft(y)
+      .ticks((slices[0].values).length / 2)
+      .tickFormat(function (d) {
+        if ((d / 1000000) >= 1) {
+          d = d / 1000000 + "M";
+        } else if (d == 500000) {
+          d = 500 + "K";
+        } else if (d == 0) {
+          d = "";
+        }
+        return d;
+    });
+
+  const xaxis = d3.axisBottom(x)
+      .tickFormat(d3.timeFormat('%Y'));
+  //----------------------------LINES-----------------------------//
+  const line = d3.line()
+      .x(function(d) { return x(d.date); })
+      .y(function(d) { return y(d.measurement); });
+
+  let id = 0;
+  const ids = function () {
+      return "line-"+id++;
+  }
+  //-------------------------2. DRAWING---------------------------//
+  //-----------------------------AXES-----------------------------//
+  svg.append("g")
+      .attr("class", "axis")
+      .attr("transform", "translate(40," + height + ")")
+      .call(xaxis);
+
+  svg.append("g")
+      .attr("class", "axis")
+      .attr("transform", "translate(40, 0)")
+      .call(yaxis)
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("dy", ".75em")
+      .attr("y", 6)
+      .style("text-anchor", "end")
+      .text("Billions BTU");
+
+  //----------------------------LINES-----------------------------//
+  const lines = svg.selectAll("lines")
+      .data(slices)
+      .enter()
+      .append("g");
+
+  lines.append("path")
+      .attr("class", ids)
+      .attr("d", function(d) { return line(d.values); });
+
+  lines.append("text")
+      .attr("class","serie_label")
+      .datum(function(d) {
+          return {
+              id: d.id,
+              value: d.values[d.values.length - 1]}; })
+      .attr("transform", function(d) {
+        return "translate(" + (x(d.value.date))
+                + "," + (y(d.value.measurement) + 5) + ")";
+      })
+      .attr("x", 5)
+      .text(function(d) { return ("State: ") + d.id; });
+
+});
+</script>
 </body>
-</html>
