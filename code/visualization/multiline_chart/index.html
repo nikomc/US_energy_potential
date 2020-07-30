@@ -126,6 +126,6 @@ dataset.then(function(data) {
       .attr("x", 5)
       .text(function(d) { return ("State: ") + d.id; });
 
-});
+}).catch(console.log.bind(console));
 </script>
 </body>
